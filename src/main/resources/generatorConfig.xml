@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+        PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+
+<generatorConfiguration>
+    <context id="sys" targetRuntime="MyBatis3">
+        <!--the order of sub property is important-->
+        <jdbcConnection driverClass="com.mysql.cj.jdbc.Driver"
+                        connectionURL="jdbc:mysql://localhost:3306/idempotent"
+                        userId="lwq"
+                        password="123456">
+        </jdbcConnection>
+
+        <javaModelGenerator targetPackage="me.liuweiqiang.idempotent.dao.model" targetProject="src/main/java"/>
+
+        <sqlMapGenerator targetPackage="mapper" targetProject="src/main/resources">
+        </sqlMapGenerator>
+
+        <javaClientGenerator targetPackage="me.liuweiqiang.idempotent.dao" targetProject="src/main/java" type="XMLMAPPER"/>
+
+        <!--replace [catalog..] with [catalog.]-->
+        <table tableName="request" catalog="idempotent" mapperName="RequestDAO"/>
+    </context>
+</generatorConfiguration>
