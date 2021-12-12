@@ -27,13 +27,13 @@ class IdempotentTest {
     }
 
     @Test
-    public void testSuccess() {
-        logger.info(idempotent.process());
+    public void testNestedProcessing() {
+        logger.info(idempotent.nestedProcessing(""));
     }
 
     @Test
-    public void testDup() {
-        logger.info(idempotent.process());
+    public void testRequiresNewProcessing() {
+        logger.info(idempotent.requiresNewProcessing(""));
     }
 
 }
