@@ -13,6 +13,9 @@ class IdempotentTest {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
+    private static final String CONSUMER = "test";
+    private static final String REQUEST_ID = "testReqId";
+
     @Autowired
     private RequestDAO requestDAO;
     @Autowired
@@ -28,12 +31,12 @@ class IdempotentTest {
 
     @Test
     public void testNestedProcessing() {
-        logger.info(idempotent.nestedProcessing(""));
+        logger.info(idempotent.nestedProcessing(CONSUMER, REQUEST_ID, ""));
     }
 
     @Test
-    public void testRequiresNewProcessing() {
-        logger.info(idempotent.requiresNewProcessing(""));
+    public void testRequiredProcessing() {
+        logger.info(idempotent.requiredProcessing(CONSUMER, REQUEST_ID, ""));
     }
 
 }
