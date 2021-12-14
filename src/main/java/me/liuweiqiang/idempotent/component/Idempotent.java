@@ -64,7 +64,7 @@ public class Idempotent {
         try {
             requestDAO.insertSelective(request);
         } catch (Exception e) { //DuplicateKeyException
-            return PROCESSING;
+            throw new BizException(e, PROCESSING);
         }
         String responseCode = DONE;
         try {
