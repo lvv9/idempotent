@@ -30,7 +30,7 @@ class IdempotentTest {
     }
 
     @Test
-    public void testNestedProcessing() {
+    public void testNestedProcessing() throws Exception {
         logger.info(idempotent.nestedProcessing(CONSUMER, REQUEST_ID, ""));
     }
 

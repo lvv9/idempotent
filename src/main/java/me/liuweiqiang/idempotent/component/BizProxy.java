@@ -1,6 +1,7 @@
 package me.liuweiqiang.idempotent.component;
 
 import me.liuweiqiang.idempotent.BizException;
+import me.liuweiqiang.idempotent.UnknownException;
 import me.liuweiqiang.idempotent.dao.RequestDAO;
 import me.liuweiqiang.idempotent.dao.model.Request;
 import me.liuweiqiang.idempotent.dao.model.RequestExample;
@@ -21,8 +22,8 @@ public class BizProxy {
     @Autowired
     private RequestDAO requestDAO;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public String process(String consumer, String reqId, String req) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
+    public String process(String consumer, String reqId, String req) throws UnknownException {
         RequestExample selectExample = new RequestExample();
         RequestExample.Criteria selectCriteria = selectExample.createCriteria();
         selectCriteria.andConsumerEqualTo(consumer);
@@ -38,7 +39,7 @@ public class BizProxy {
         try {
             requestDAO.insertSelective(request);
         } catch (Exception e) { //DuplicateKeyException
-            throw new BizException(e, PROCESSING);
+            throw new UnknownException(e);
         }
         internalProcessing(req);
         return DONE;

@@ -1,6 +1,7 @@
 package me.liuweiqiang.idempotent.component;
 
 import me.liuweiqiang.idempotent.BizException;
+import me.liuweiqiang.idempotent.UnknownException;
 import me.liuweiqiang.idempotent.dao.RequestDAO;
 import me.liuweiqiang.idempotent.dao.model.Request;
 import me.liuweiqiang.idempotent.dao.model.RequestExample;
@@ -48,8 +49,8 @@ public class Idempotent {
         }
     }
 
-    @Transactional
-    public String nestedProcessing(String consumer, String reqId, String req) {
+    @Transactional(rollbackFor = Exception.class)
+    public String nestedProcessing(String consumer, String reqId, String req) throws UnknownException {
         RequestExample selectExample = new RequestExample();
         RequestExample.Criteria selectCriteria = selectExample.createCriteria();
         selectCriteria.andConsumerEqualTo(consumer);
@@ -64,7 +65,7 @@ public class Idempotent {
         try {
             requestDAO.insertSelective(request);
         } catch (Exception e) { //DuplicateKeyException
-            throw new BizException(e, PROCESSING);
+            throw new UnknownException(e);
         }
         String responseCode = DONE;
         try {
@@ -72,8 +73,8 @@ public class Idempotent {
         } catch (BizException e) {
             responseCode = e.getResponseCode();
         } catch (Exception e) {
-            //rollback when processing had unknown exception
-            throw new BizException(e, PROCESSING);
+            //rollback when processing encountered an unknown exception
+            throw new UnknownException(e);
         }
         RequestExample updateExample = new RequestExample();
         RequestExample.Criteria updateCriteria = updateExample.createCriteria();
