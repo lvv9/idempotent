@@ -2,7 +2,9 @@ package me.liuweiqiang.idempotent.component;
 
 import me.liuweiqiang.idempotent.BizException;
 import me.liuweiqiang.idempotent.UnknownException;
+import me.liuweiqiang.idempotent.dao.NewTableDAO;
 import me.liuweiqiang.idempotent.dao.RequestDAO;
+import me.liuweiqiang.idempotent.dao.model.NewTable;
 import me.liuweiqiang.idempotent.dao.model.Request;
 import me.liuweiqiang.idempotent.dao.model.RequestExample;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,11 +18,12 @@ import java.util.List;
 public class BizProxy {
 
     private static final String DONE = "0000";
-    private static final String PROCESSING = "1111";
     private static final String SOME_BIZ_CODE = "2222";
 
     @Autowired
     private RequestDAO requestDAO;
+    @Autowired
+    private NewTableDAO newTableDAO;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
     public String process(String consumer, String reqId, String req) throws UnknownException {
@@ -51,6 +54,9 @@ public class BizProxy {
     }
 
     private void internalProcessing(String req) {
+        NewTable test = new NewTable();
+        test.setForTest(req);
+        int count = newTableDAO.insertSelective(test);
         if ("".equals(req)) {
             throw new BizException(SOME_BIZ_CODE);
         }
