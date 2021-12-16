@@ -1,5 +1,6 @@
 package me.liuweiqiang.idempotent.dao;
 
+import me.liuweiqiang.idempotent.aop.ExceptionAOP;
 import me.liuweiqiang.idempotent.component.Idempotent;
 import me.liuweiqiang.idempotent.dao.model.NewTable;
 import me.liuweiqiang.idempotent.dao.model.NewTableExample;
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 
 import java.util.List;
 
@@ -25,6 +27,9 @@ class IdempotentTest {
     private static final String DONE = "0000";
     private static final String PROCESSING = "1111";
     private static final String SOME_BIZ_CODE = "2222";
+
+    @Autowired
+    private ApplicationContext applicationContext;
 
     @Autowired
     private RequestDAO requestDAO;
@@ -121,6 +126,28 @@ class IdempotentTest {
         Assertions.assertTrue(newTables.isEmpty());
 
         requestDAO.deleteByExample(requestExample);
+    }
+
+    @Test
+    public void testRequiredAfterRequiresNewThrow() {
+        String ret = idempotent.requiredProcessing(CONSUMER, REQUEST_ID, ExceptionAOP.THROW_EXCEPTION);
+        Assertions.assertEquals(PROCESSING, ret);
+
+        RequestExample requestExample = new RequestExample();
+        RequestExample.Criteria criteria = requestExample.createCriteria();
+        criteria.andRequestIdEqualTo(REQUEST_ID);
+        criteria.andConsumerEqualTo(CONSUMER);
+        List<Request> requestList = requestDAO.selectByExample(requestExample);
+        Assertions.assertEquals(DONE, requestList.get(0).getStatus());
+
+        NewTableExample newTableExample = new NewTableExample();
+        NewTableExample.Criteria newTableCriteria = newTableExample.createCriteria();
+        newTableCriteria.andForTestEqualTo(ExceptionAOP.THROW_EXCEPTION);
+        List<NewTable> newTables = newTableDAO.selectByExample(newTableExample);
+        Assertions.assertEquals(ExceptionAOP.THROW_EXCEPTION, newTables.get(0).getForTest());
+
+        requestDAO.deleteByExample(requestExample);
+        newTableDAO.deleteByPrimaryKey(newTables.get(0).getId());
     }
 
 }
