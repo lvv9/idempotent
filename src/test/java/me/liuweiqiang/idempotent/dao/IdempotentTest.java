@@ -1,5 +1,6 @@
 package me.liuweiqiang.idempotent.dao;
 
+import me.liuweiqiang.idempotent.UnknownException;
 import me.liuweiqiang.idempotent.aop.ExceptionAOP;
 import me.liuweiqiang.idempotent.component.Idempotent;
 import me.liuweiqiang.idempotent.dao.model.NewTable;
@@ -148,6 +149,29 @@ class IdempotentTest {
 
         requestDAO.deleteByExample(requestExample);
         newTableDAO.deleteByPrimaryKey(newTables.get(0).getId());
+    }
+
+    @Test
+    public void testRequiredAfterNestedThrow() {
+        try {
+            idempotent.nestedProcessing(CONSUMER, REQUEST_ID, ExceptionAOP.THROW_EXCEPTION);
+            Assertions.fail("no exception thrown");
+        } catch (UnknownException e) {
+            logger.info("processing", e);
+        }
+
+        RequestExample requestExample = new RequestExample();
+        RequestExample.Criteria criteria = requestExample.createCriteria();
+        criteria.andRequestIdEqualTo(REQUEST_ID);
+        criteria.andConsumerEqualTo(CONSUMER);
+        List<Request> requestList = requestDAO.selectByExample(requestExample);
+        Assertions.assertTrue(requestList.isEmpty());
+
+        NewTableExample newTableExample = new NewTableExample();
+        NewTableExample.Criteria newTableCriteria = newTableExample.createCriteria();
+        newTableCriteria.andForTestEqualTo(ExceptionAOP.THROW_EXCEPTION);
+        List<NewTable> newTables = newTableDAO.selectByExample(newTableExample);
+        Assertions.assertTrue(newTables.isEmpty());
     }
 
 }
