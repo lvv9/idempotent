@@ -1,6 +1,6 @@
 package me.liuweiqiang.idempotent;
 
-public class BizException extends RuntimeException{
+public class BizException extends RuntimeException {
 
     private String responseCode;
 
