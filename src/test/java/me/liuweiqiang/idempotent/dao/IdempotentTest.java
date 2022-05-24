@@ -1,6 +1,6 @@
 package me.liuweiqiang.idempotent.dao;
 
-import me.liuweiqiang.idempotent.UnknownException;
+import me.liuweiqiang.idempotent.BizException;
 import me.liuweiqiang.idempotent.aop.ExceptionAOP;
 import me.liuweiqiang.idempotent.component.Idempotent;
 import me.liuweiqiang.idempotent.dao.model.NewTable;
@@ -28,6 +28,7 @@ class IdempotentTest {
     private static final String DONE = "0000";
     private static final String PROCESSING = "1111";
     private static final String SOME_BIZ_CODE = "2222";
+    private static final String SOME_BIZ_CODE_NEXT = "3333";
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -88,45 +89,59 @@ class IdempotentTest {
 
     @Test
     public void testNestedFail() throws Exception {
-        String ret = idempotent.nestedProcessing(CONSUMER, REQUEST_ID, "");
-        Assertions.assertEquals(SOME_BIZ_CODE, ret);
+        try {
+            idempotent.nestedProcessing(CONSUMER, REQUEST_ID, "");
+            Assertions.fail("no exception thrown");
+        } catch (BizException e) {
+            Assertions.assertEquals(SOME_BIZ_CODE, e.getResponseCode());
+        }
 
         RequestExample requestExample = new RequestExample();
         RequestExample.Criteria criteria = requestExample.createCriteria();
         criteria.andRequestIdEqualTo(REQUEST_ID);
         criteria.andConsumerEqualTo(CONSUMER);
         List<Request> requestList = requestDAO.selectByExample(requestExample);
-        Assertions.assertEquals(SOME_BIZ_CODE, requestList.get(0).getStatus());
+        Assertions.assertTrue(requestList.isEmpty());
 
         NewTableExample newTableExample = new NewTableExample();
         NewTableExample.Criteria newTableCriteria = newTableExample.createCriteria();
         newTableCriteria.andForTestEqualTo("");
         List<NewTable> newTables = newTableDAO.selectByExample(newTableExample);
         Assertions.assertTrue(newTables.isEmpty());
-
-        requestDAO.deleteByExample(requestExample);
     }
 
     @Test
     public void testNestedIdempotentFail() throws Exception {
-        idempotent.nestedProcessing(CONSUMER, REQUEST_ID, "");
-        String ret = idempotent.nestedProcessing(CONSUMER, REQUEST_ID, "");
-        Assertions.assertEquals(SOME_BIZ_CODE, ret);
+        try {
+            idempotent.nestedProcessing(CONSUMER, REQUEST_ID, "");
+            Assertions.fail("no exception thrown");
+        } catch (BizException e) {
+            Assertions.assertEquals(SOME_BIZ_CODE, e.getResponseCode());
+        }
+        try {
+            idempotent.nestedProcessing(CONSUMER, REQUEST_ID, " ");
+            Assertions.fail("no exception thrown");
+        } catch (BizException e) {
+            Assertions.assertEquals(SOME_BIZ_CODE_NEXT, e.getResponseCode());
+        }
 
         RequestExample requestExample = new RequestExample();
         RequestExample.Criteria criteria = requestExample.createCriteria();
         criteria.andRequestIdEqualTo(REQUEST_ID);
         criteria.andConsumerEqualTo(CONSUMER);
         List<Request> requestList = requestDAO.selectByExample(requestExample);
-        Assertions.assertEquals(SOME_BIZ_CODE, requestList.get(0).getStatus());
+        Assertions.assertTrue(requestList.isEmpty());
 
         NewTableExample newTableExample = new NewTableExample();
         NewTableExample.Criteria newTableCriteria = newTableExample.createCriteria();
         newTableCriteria.andForTestEqualTo("");
         List<NewTable> newTables = newTableDAO.selectByExample(newTableExample);
         Assertions.assertTrue(newTables.isEmpty());
-
-        requestDAO.deleteByExample(requestExample);
+        NewTableExample newTableExampleNext = new NewTableExample();
+        NewTableExample.Criteria newTableCriteriaNext = newTableExampleNext.createCriteria();
+        newTableCriteriaNext.andForTestEqualTo(" ");
+        newTables = newTableDAO.selectByExample(newTableExampleNext);
+        Assertions.assertTrue(newTables.isEmpty());
     }
 
     @Test
@@ -156,7 +171,7 @@ class IdempotentTest {
         try {
             idempotent.nestedProcessing(CONSUMER, REQUEST_ID, ExceptionAOP.THROW_EXCEPTION);
             Assertions.fail("no exception thrown");
-        } catch (UnknownException e) {
+        } catch (RuntimeException e) {
             logger.info("processing", e);
         }
 
