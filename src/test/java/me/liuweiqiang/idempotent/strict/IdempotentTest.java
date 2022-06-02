@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 
+import java.util.Arrays;
 import java.util.List;
 
 @SpringBootTest
@@ -105,7 +106,14 @@ class IdempotentTest {
         List<NewTable> newTables = newTableDAO.selectByExample(newTableExample);
         Assertions.assertTrue(newTables.isEmpty());
 
+        newTableExample = new NewTableExample();
+        newTableCriteria = newTableExample.createCriteria();
+        newTableCriteria.andForTestEqualTo("fail");
+        newTables = newTableDAO.selectByExample(newTableExample);
+        Assertions.assertFalse(newTables.isEmpty());
+
         requestDAO.deleteByExample(requestExample);
+        newTableDAO.deleteByPrimaryKey(newTables.get(0).getId());
     }
 
     @Test
@@ -127,7 +135,14 @@ class IdempotentTest {
         List<NewTable> newTables = newTableDAO.selectByExample(newTableExample);
         Assertions.assertTrue(newTables.isEmpty());
 
+        newTableExample = new NewTableExample();
+        newTableCriteria = newTableExample.createCriteria();
+        newTableCriteria.andForTestEqualTo("fail");
+        newTables = newTableDAO.selectByExample(newTableExample);
+        Assertions.assertFalse(newTables.isEmpty());
+
         requestDAO.deleteByExample(requestExample);
+        newTableDAO.deleteByPrimaryKey(newTables.get(0).getId());
     }
 
     @Test
@@ -170,7 +185,7 @@ class IdempotentTest {
 
         NewTableExample newTableExample = new NewTableExample();
         NewTableExample.Criteria newTableCriteria = newTableExample.createCriteria();
-        newTableCriteria.andForTestEqualTo(ExceptionAOP.THROW_EXCEPTION);
+        newTableCriteria.andForTestIn(Arrays.asList(ExceptionAOP.THROW_EXCEPTION, "fail"));
         List<NewTable> newTables = newTableDAO.selectByExample(newTableExample);
         Assertions.assertTrue(newTables.isEmpty());
     }

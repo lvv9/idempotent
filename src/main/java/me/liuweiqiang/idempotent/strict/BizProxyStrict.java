@@ -61,4 +61,10 @@ public class BizProxyStrict {
             throw new BizException(SOME_BIZ_CODE);
         }
     }
+
+    public void failCommit(String req) {
+        NewTable test = new NewTable();
+        test.setForTest(req);
+        int count = newTableDAO.insertSelective(test);
+    }
 }

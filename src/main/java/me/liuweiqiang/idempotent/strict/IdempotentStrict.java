@@ -27,6 +27,7 @@ public class IdempotentStrict {
         try {
             return bizProxyStrict.process(consumer, reqId, req);
         } catch (BizException e) {
+            bizProxyStrict.failCommit("fail");
             return logFailure(consumer, reqId, e.getResponseCode());
         } catch (Exception e) {
             return PROCESSING;
@@ -69,6 +70,7 @@ public class IdempotentStrict {
             bizProxyStrict.processOnNest(req);
         } catch (BizException e) {
             responseCode = e.getResponseCode();
+            bizProxyStrict.failCommit("fail");
         } catch (Exception e) {
             //rollback when processing encountered an unknown exception
             throw new UnknownException(e);
