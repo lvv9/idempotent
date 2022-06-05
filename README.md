@@ -38,6 +38,7 @@
 业务处理过程中存在未知异常时（例如空指针)或者某个切面异常，在Propagation.REQUIRES_NEW实现中，由于外层无法判断new transaction的提交与否（因为数据库提交后也可能发生异常），可以捕获后返回【处理中】。
 
 如果是用MySQL实现，需要注意MySQL的隔离级别、并发控制（ [MySQL并发实验](https://liuweiqiang.me/2021/12/03/mysql-concurrent-control-test.html) )。
+
 4. 客户端不友好的实现：
 如果是用MySQL insert（consumerId+requestId）的话，需要区分键值重复异常和获取锁超时异常/其它异常。<br/>
 键值重复异常，返回重复相关返回码，对于其它异常，不管是服务端还是客户端，都对事务的状态未明，对于这种情况，服务端返回未明错误，或者还是像第1种方式那样直接丢弃或者返回【处理中】。<br/>
